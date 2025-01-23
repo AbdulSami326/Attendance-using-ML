@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+</head>
+<body>
+    <center>
+        <a href="/templates/index.html"><img src="home1.jpg">Attendo</a>
+    <h1>Face Recognition Attendance System</h1>
+    
+    <!-- Webcam and capture button -->
+    <div>
+        <video id="webcam" autoplay playsinline width="600" height="600"></video>
+        <br>
+        <label for="image-name">Enter your Roll no.:</label>
+        <input type="text" id="image-name" placeholder="Roll Number">
+        <button id="capture-btn">Capture Photo</button>
+    </div>
+</center>
+
+    <!-- Canvas where the captured photo will be displayed -->
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const captureBtn = document.getElementById('capture-btn');
+        const imageNameInput = document.getElementById('image-name');
+
+        // Access webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Error accessing webcam: ", err);
+            });
+
+        // Capture photo when button is clicked
+        captureBtn.addEventListener('click', () => {
+            const imageName = imageNameInput.value.trim();
+
+            if (!imageName) {
+                alert("Please enter a name for the image.");
+                return;
+            }
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the canvas image to base64 format
+            const imageData = canvas.toDataURL('image/png');
+
+            // Send the captured image and name to the server
+            fetch('/upload-photo', {
+                method: 'POST',
+                body: JSON.stringify({ image: imageData, name: imageName }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Photo captured and saved successfully!');
+                } else {
+                    alert('Failed to save photo.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>
